@@ -30,7 +30,7 @@ namespace Moneybox.App.Domain.Services.Concrete
             var fromBalance = this.balanceService.Withdrawal(from.Balance, amount);
             if (fromBalance < 0m)
             {
-                throw new InvalidOperationException("Insufficient funds to make transfer");
+                throw new InvalidOperationException(Constants.Exception.InsufficientFunds);
             }
 
             if (fromBalance < 500m)
@@ -44,7 +44,7 @@ namespace Moneybox.App.Domain.Services.Concrete
             var paidIn = this.balanceService.Deposit(to.PaidIn, amount);
             if (paidIn > Account.PayInLimit)
             {
-                throw new InvalidOperationException("Account pay in limit reached");
+                throw new InvalidOperationException(Constants.Exception.AccountLimitReached);
             }
 
             if (Account.PayInLimit - paidIn < 500m)
