@@ -1,55 +1,39 @@
-﻿using Moneybox.App.DataAccess;
-using Moneybox.App.Domain.Services;
+﻿using Moneybox.App.Domain.Services.Abstract;
 using System;
 
 namespace Moneybox.App.Features
 {
     public class TransferMoney
     {
-        private IAccountRepository accountRepository;
-        private INotificationService notificationService;
+        private IAccountService accountService;
+        private IBalanceService balanceService;
+        private IUpdateService updateService;
 
-        public TransferMoney(IAccountRepository accountRepository, INotificationService notificationService)
+        public TransferMoney(
+            IAccountService accountService,
+            IBalanceService balanceService,
+            IUpdateService updateService)
         {
-            this.accountRepository = accountRepository;
-            this.notificationService = notificationService;
+            this.accountService = accountService;
+            this.balanceService = balanceService;
+            this.updateService = updateService;
         }
 
         public void Execute(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
-            var from = this.accountRepository.GetAccountById(fromAccountId);
-            var to = this.accountRepository.GetAccountById(toAccountId);
+            var from = this.accountService.GetAccountInformation(fromAccountId);
+            var to = this.accountService.GetAccountInformation(toAccountId);
 
-            var fromBalance = from.Balance - amount;
-            if (fromBalance < 0m)
-            {
-                throw new InvalidOperationException("Insufficient funds to make transfer");
-            }
+            this.accountService.FromBalance(amount, from);
+            this.accountService.PaidInBalance(amount, to);
 
-            if (fromBalance < 500m)
-            {
-                this.notificationService.NotifyFundsLow(from.User.Email);
-            }
+            from.Balance = this.balanceService.Withdrawal(from.Balance, amount);
+            from.Withdrawn = this.balanceService.Withdrawal(from.Withdrawn, amount);
+            to.Balance = this.balanceService.Deposit(to.Balance, amount);
+            to.PaidIn = this.balanceService.Deposit(to.PaidIn, amount);
 
-            var paidIn = to.PaidIn + amount;
-            if (paidIn > Account.PayInLimit)
-            {
-                throw new InvalidOperationException("Account pay in limit reached");
-            }
-
-            if (Account.PayInLimit - paidIn < 500m)
-            {
-                this.notificationService.NotifyApproachingPayInLimit(to.User.Email);
-            }
-
-            from.Balance = from.Balance - amount;
-            from.Withdrawn = from.Withdrawn - amount;
-
-            to.Balance = to.Balance + amount;
-            to.PaidIn = to.PaidIn + amount;
-
-            this.accountRepository.Update(from);
-            this.accountRepository.Update(to);
+            this.updateService.UpdateAccount(from);
+            this.updateService.UpdateAccount(to);
         }
     }
 }
