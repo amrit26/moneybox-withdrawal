@@ -24,3 +24,9 @@ As part of this process however, you should look to refactor some of the code in
 Once you have completed your work, send us a link to your public repository.
 
 Good luck!
+
+## What I did
+I added Abstract and Concrete folders inside the Services folder which contain the interfaces that need implementing to their concrete classes respectfully.
+I added an account service, balance service and update service to have a separation of concerns. 
+I did this because we can reuse the services as has been shown in both TransferMoney.cs and WithrdawMoney.cs.
+I added Constants for code reusability also. 
